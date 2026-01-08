@@ -1,43 +1,63 @@
-# Laptop Price Prediction
+# Laptop Price Prediction (Regression)
 
 ## Problem
-Predict the price of a laptop based on its specifications such as brand,
-processor, RAM, storage, GPU, operating system, and screen size.
+Predict laptop prices based on specifications (brand, CPU, RAM, storage, GPU, screen size, etc.).
+This is a regression problem.
 
 ## Dataset
-Tabular dataset containing laptop features and the target variable `Price`.
-The dataset includes both numerical and categorical features.
+Tabular dataset of laptop specifications with a target column `Price`.
 
-## Approach
-1. Data cleaning and preprocessing
-2. Handling categorical features using encoding
-3. Feature selection and transformation
-4. Train-test split
-5. Model training and evaluation
-6. Model comparison to select the best performer
+## Important Note (Target Transformation)
+In this notebook, the target is transformed using:
+- `y = np.log(Price)`
 
-## Models Used
-- Linear Regression (baseline)
-- Random Forest Regressor
-- Decision Tree *(or other models used in the notebook)*
+So evaluation metrics (MAE and R²) are reported on the **log-price scale**.
+To convert predictions back to original price units:
+- `price_pred = np.exp(y_pred)`
 
-## Evaluation Metrics
-- Mean Absolute Error (MAE)
-- Root Mean Squared Error (RMSE)
-- R² Score
+## Workflow
+1. Data cleaning + feature engineering (extract and clean spec columns)
+2. Split data into train/test
+3. Build a preprocessing + model pipeline
+4. Train baseline models (tested multiple regressors)
+5. Tune a Random Forest model using RandomizedSearchCV
+6. Evaluate the best model on the test set
 
-## Results
-The model performance was evaluated using regression metrics.
-The best-performing model achieved improved accuracy compared
-to the baseline model.
+## Preprocessing
+- Categorical features are One-Hot Encoded using a `ColumnTransformer`
+- Remaining columns are passed through
 
-## How to Run
-1. Open the notebook: `laptop_price_prediction.ipynb`
-2. Run all cells sequentially
+## Model
+Best performing model:
+- **Random Forest Regressor** inside a Scikit-learn `Pipeline`
 
-## Tools
+## Hyperparameter Tuning (RandomizedSearchCV)
+- Method: `RandomizedSearchCV`
+- Iterations: `n_iter = 30`
+- Cross-validation folds: `cv = 5`
+- Scoring: `r2`
+- Random seed: `random_state = 42`
+
+Parameters searched included:
+- `n_estimators`, `max_depth`, `max_features`,
+  `min_samples_split`, `min_samples_leaf`, `max_samples`
+
+Best parameters found (from notebook output):
+- `n_estimators = 500`
+- `max_depth = 30`
+- `max_features = 0.5`
+- `max_samples = 0.75`
+(+ tuned values for `min_samples_split` and `min_samples_leaf`)
+
+## Results (from notebook)
+Test R² (best): **0.8950139592049811**  
+Test MAE: **0.1536517154334115**  *(log-price scale)*
+
+## Files
+- `laptop price predictor.ipynb` — full notebook (preprocessing, training, tuning, evaluation)
+
+## Tools & Libraries
 - Python
-- Pandas
-- NumPy
-- Scikit-learn
+- Pandas, NumPy
+- Scikit-learn (Pipeline, ColumnTransformer, OneHotEncoder, RandomizedSearchCV)
 - Matplotlib / Seaborn
