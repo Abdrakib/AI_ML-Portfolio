@@ -6,6 +6,7 @@ This repository contains my hands-on projects in:
 - Computer Vision
 - Natural Language Processing
 - Time Series Analysis
+- Data science
 
 ## Skills & Tools
 - Python
