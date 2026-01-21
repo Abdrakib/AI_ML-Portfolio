@@ -14,10 +14,9 @@ pip install -r requirements.txt
 python heart_disease_prediction.py
 ```
 
-## Using Your Own Data
+## Data
 
-If you have a CSV file with heart disease data, place it in the same directory as the script and name it:
-- `heart.csv` or
+
 - `heart_disease.csv`
 
 The script will automatically detect and use your CSV file. Make sure your CSV has:
