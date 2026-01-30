@@ -178,7 +178,7 @@ The best model typically achieves:
 Parkinson_Disease_Detection/
 ├── parkinson_detection.ipynb    # Main notebook
 ├── README.md                    # This file
-└── parkinsons.data              # Dataset (if available)
+└── parkinsons.data              # Dataset 
 ```
 
 ## Notes
@@ -197,3 +197,4 @@ Parkinson_Disease_Detection/
 ## License
 
 This project is for educational and research purposes.
+
