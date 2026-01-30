@@ -28,7 +28,7 @@ This project performs market basket analysis on retail transaction data to ident
 5. **Data Split** - Split data into train/test sets for validation
 6. **Association Rule Mining**
    - Apriori algorithm (classic)
-   - FP-Growth algorithm (faster, recommended)
+   - FP-Growth algorithm (faster)
    - Configurable parameters: min_support, min_confidence, min_lift
 7. **Rule Generation & Filtering**
    - Filter by lift > 1 (positive association)
@@ -117,4 +117,5 @@ The analysis generates:
 - Rare items are filtered to reduce noise (default: min 10 transactions)
 - Rules are filtered for business relevance (lift > 1, confidence >= 0.5)
 - Results are exported to CSV for further analysis
+
 
