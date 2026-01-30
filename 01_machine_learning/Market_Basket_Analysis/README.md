@@ -66,7 +66,7 @@ Key libraries:
 
 2. **Update data path**: In the notebook, update the CSV file path:
    ```python
-   df = pd.read_csv('your_data_file.csv')
+   df = pd.read_csv('data_file.csv')
    ```
 
 3. **Run the notebook**: Execute cells sequentially to:
@@ -117,5 +117,6 @@ The analysis generates:
 - Rare items are filtered to reduce noise (default: min 10 transactions)
 - Rules are filtered for business relevance (lift > 1, confidence >= 0.5)
 - Results are exported to CSV for further analysis
+
 
 
