@@ -7,8 +7,8 @@ from typing import Any
 import numpy as np
 from tensorflow import keras
 
-from app.core.model_loader import get_model, get_label_maps
-from app.core.gradcam import get_gradcam_overlay_from_bytes
+from core.model_loader import get_model, get_label_maps
+from core.gradcam import get_gradcam_overlay_from_bytes
 
 logger = logging.getLogger(__name__)
 
