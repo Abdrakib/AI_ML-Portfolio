@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from  config import MODEL_PATH, LABEL_MAP_PATH
 from core.model_loader import init_model
-from app.api.routes import predict, health
+from api.routes import predict, health
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
