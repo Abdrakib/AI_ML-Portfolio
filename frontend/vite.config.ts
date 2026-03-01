@@ -7,11 +7,11 @@ export default defineConfig({
     port: 3000,
     proxy: {
       '/predict': {
-        target: 'http://127.0.0.1:8000',
+        target: 'https://ai-ml-portfolio-2pio.onrender.com',
         changeOrigin: true,
       },
       '/predict_overlay': {
-        target: 'http://127.0.0.1:8000',
+        target: 'https://ai-ml-portfolio-2pio.onrender.com',
         changeOrigin: true,
       },
     },

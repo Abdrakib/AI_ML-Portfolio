@@ -52,26 +52,63 @@ function App() {
     try {
       const formData = new FormData()
       formData.append('file', file)
-      const res = await fetch(`${API_BASE}/predict`, {
+      const res = await fetch(`${API_BASE}/predict_overlay`, {
         method: 'POST',
         body: formData,
       })
+      const contentType = res.headers.get('content-type') ?? ''
       if (!res.ok) {
-        const err = await res.json().catch(() => ({}))
-        throw new Error(err.detail || `Request failed: ${res.status}`)
+        if (contentType.includes('application/json')) {
+          const err = await res.json().catch(() => ({}))
+          throw new Error(err.detail || `Request failed: ${res.status}`)
+        }
+        throw new Error(`Request failed: ${res.status}`)
       }
-      const data: PredictionResult = await res.json()
-      setResult(data)
-      if (preview) {
-        addScanToHistory({
-          originalImage: preview,
-          gradcamImage: data.gradcam_overlay_b64,
-          prediction: data.pred_label,
-          confidence: data.confidence,
-          probs: data.probs,
-          timestamp: Date.now(),
+      if (contentType.includes('image/')) {
+        const blob = await res.blob()
+        const b64 = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader()
+          reader.onload = () => {
+            const dataUrl = reader.result as string
+            resolve(dataUrl.split(',')[1] ?? '')
+          }
+          reader.onerror = () => reject(new Error('Failed to read image'))
+          reader.readAsDataURL(blob)
         })
-        setRecentScans(getRecentScans())
+        const data: PredictionResult = {
+          pred_label: 'See overlay',
+          confidence: 0,
+          probs: { No: 0.5, Yes: 0.5 },
+          gradcam_overlay_b64: b64,
+        }
+        setResult(data)
+        if (preview) {
+          addScanToHistory({
+            originalImage: preview,
+            gradcamImage: b64,
+            prediction: data.pred_label,
+            confidence: data.confidence,
+            probs: data.probs,
+            timestamp: Date.now(),
+          })
+          setRecentScans(getRecentScans())
+        }
+      } else if (contentType.includes('application/json')) {
+        const data: PredictionResult = await res.json()
+        setResult(data)
+        if (preview) {
+          addScanToHistory({
+            originalImage: preview,
+            gradcamImage: data.gradcam_overlay_b64,
+            prediction: data.pred_label,
+            confidence: data.confidence,
+            probs: data.probs,
+            timestamp: Date.now(),
+          })
+          setRecentScans(getRecentScans())
+        }
+      } else {
+        throw new Error('Unexpected response format')
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Prediction failed')
