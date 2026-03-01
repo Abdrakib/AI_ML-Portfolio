@@ -52,6 +52,5 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(health.router)
-app.include_router(predict.router)
+
 app.include_router(predict.overlay_router)
