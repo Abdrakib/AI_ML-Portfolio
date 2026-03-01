@@ -13,7 +13,7 @@ interface PredictionResult {
   gradcam_overlay_b64: string
 }
 
-const API_BASE = ''
+const API_BASE = import.meta.env.VITE_API_URL || 'https://ai-ml-portfolio-2pio.onrender.com'
 
 function App() {
   const [file, setFile] = useState<File | null>(null)
