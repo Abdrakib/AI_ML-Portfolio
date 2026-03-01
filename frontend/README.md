@@ -34,3 +34,4 @@ npm run preview
 - Smooth confidence progress bar
 - Fade-in results animation
 - Responsive layout
+ Update deployement trigger
