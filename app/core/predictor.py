@@ -24,20 +24,20 @@ def _preprocess_image(img_bytes: bytes) -> np.ndarray:
     return np.expand_dims(arr, axis=0)
 
 
+CONFIDENCE_THRESHOLD = 0.60
+
+
 def predict_with_gradcam(img_bytes: bytes) -> dict[str, Any]:
     """
     Run inference and Grad-CAM overlay.
-    Returns: pred_label, confidence, gradcam_overlay_b64
+    Returns consistent JSON: ok, prediction, confidence, probs, uncertain, message, gradcam_overlay_b64.
     """
     model = get_model()
     _, idx_to_label = get_label_maps()
     classes = [idx_to_label[i] for i in sorted(idx_to_label.keys())]
     num_classes = len(classes)
 
-    # Preprocess for model (0-255 float32, 224x224)
     img_batch = _preprocess_image(img_bytes)
-
-    # Prediction
     probs = model.predict(img_batch, verbose=0)
 
     if num_classes == 2:
@@ -50,16 +50,29 @@ def predict_with_gradcam(img_bytes: bytes) -> dict[str, Any]:
         pred_idx = int(np.argmax(probs_vec))
         confidence = float(probs_vec[pred_idx])
 
-    pred_label = classes[pred_idx]
+    max_prob = float(np.max(probs_vec))
+    probs_dict = {classes[i]: round(float(probs_vec[i]), 4) for i in range(num_classes)}
 
-    # Grad-CAM overlay (same preprocessing as notebook)
+    pred_label = classes[pred_idx]
+    uncertain = max_prob < CONFIDENCE_THRESHOLD
+    if uncertain:
+        prediction = "Uncertain"
+        message = "Low confidence. Consider clinical review or additional imaging."
+    else:
+        prediction = "Tumor Detected" if pred_label.lower() == "yes" else "No Tumor Detected"
+        message = ""
+
     overlay_bytes = get_gradcam_overlay_from_bytes(img_bytes, model, alpha=0.35, format="png")
     gradcam_b64 = base64.b64encode(overlay_bytes).decode("utf-8")
 
     return {
-        "pred_label": pred_label,
+        "ok": True,
+        "prediction": prediction,
+        "pred_label": "Uncertain" if uncertain else pred_label,
         "confidence": round(confidence, 4),
-        "probs": {classes[i]: float(probs_vec[i]) for i in range(num_classes)},
+        "probs": probs_dict,
+        "uncertain": uncertain,
+        "message": message,
         "gradcam_overlay_b64": gradcam_b64,
     }
 

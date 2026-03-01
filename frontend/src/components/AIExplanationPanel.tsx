@@ -1,28 +1,33 @@
 interface AIExplanationPanelProps {
   predLabel: string
   confidence: number
+  uncertain?: boolean
 }
 
-function getRiskLevel(confidence: number): 'High' | 'Medium' | 'Low' {
+function getRiskLevel(confidence: number, uncertain?: boolean): 'High' | 'Medium' | 'Low' {
+  if (uncertain) return 'Low'
   if (confidence > 0.8) return 'High'
   if (confidence >= 0.6) return 'Medium'
   return 'Low'
 }
 
-function getConfidenceInterpretation(confidence: number): string {
+function getConfidenceInterpretation(confidence: number, uncertain?: boolean): string {
+  if (uncertain) return 'Low confidence — consider clinical review'
   if (confidence > 0.8) return 'High confidence'
   if (confidence >= 0.6) return 'Medium confidence'
   return 'Low confidence'
 }
 
-export function AIExplanationPanel({ predLabel, confidence }: AIExplanationPanelProps) {
+export function AIExplanationPanel({ predLabel, confidence, uncertain }: AIExplanationPanelProps) {
   const isYes = predLabel.toLowerCase() === 'yes'
-  const riskLevel = getRiskLevel(confidence)
-  const confidenceText = getConfidenceInterpretation(confidence)
+  const riskLevel = getRiskLevel(confidence, uncertain)
+  const confidenceText = getConfidenceInterpretation(confidence, uncertain)
 
-  const mainExplanation = isYes
-    ? 'Model detected tumor-related visual patterns.'
-    : 'No tumor-specific patterns detected.'
+  const mainExplanation = uncertain
+    ? 'Low confidence result. Consider clinical review or additional imaging.'
+    : isYes
+      ? 'Model detected tumor-related visual patterns.'
+      : 'No tumor-specific patterns detected.'
 
   const riskLevelStyles = {
     High: 'bg-amber-500/20 border-amber-500/40 text-amber-400',

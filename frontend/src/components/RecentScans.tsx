@@ -53,7 +53,9 @@ export function RecentScans({ scans, onSelectScan }: RecentScansProps) {
                   className={`inline-flex px-3 py-1 rounded-lg text-xs font-medium ${
                     scan.prediction.toLowerCase() === 'yes'
                       ? 'bg-amber-500/20 border border-amber-500/40 text-amber-400'
-                      : 'bg-emerald-500/20 border border-emerald-500/40 text-emerald-400'
+                      : scan.prediction.toLowerCase() === 'uncertain'
+                        ? 'bg-amber-500/20 border border-amber-500/40 text-amber-400'
+                        : 'bg-emerald-500/20 border border-emerald-500/40 text-emerald-400'
                   }`}
                 >
                   {formatPredictionLabel(scan.prediction)}

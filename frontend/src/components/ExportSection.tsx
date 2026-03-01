@@ -10,6 +10,7 @@ interface ExportSectionProps {
   gradcamOverlayB64: string | null
   interpretation: string
   riskLevel: string
+  requestId?: string
 }
 
 export function ExportSection({
@@ -20,6 +21,7 @@ export function ExportSection({
   gradcamOverlayB64,
   interpretation,
   riskLevel,
+  requestId,
 }: ExportSectionProps) {
   const [toast, setToast] = useState<'none' | 'copied' | 'downloaded'>('none')
 
@@ -60,7 +62,7 @@ export function ExportSection({
 
     doc.setFontSize(10)
     doc.setTextColor(100, 100, 100)
-    doc.text(`Generated: ${new Date().toLocaleString()}`, margin, y)
+    doc.text(`Generated: ${new Date().toLocaleString()}${requestId ? ` · #${requestId}` : ''}`, margin, y)
     y += 16
 
     doc.setTextColor(0, 0, 0)
@@ -129,7 +131,7 @@ export function ExportSection({
 
     doc.save(`brain-mri-report-${new Date().toISOString().slice(0, 10)}.pdf`)
     showToast('downloaded')
-  }, [predLabel, confidence, riskLevel, originalImageSrc, gradcamOverlayB64, interpretation, showToast])
+  }, [predLabel, confidence, riskLevel, originalImageSrc, gradcamOverlayB64, interpretation, requestId, showToast])
 
   return (
     <div className="rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl shadow-2xl shadow-black/20 p-8 sm:p-10 transition-all duration-500">

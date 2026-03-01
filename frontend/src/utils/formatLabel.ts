@@ -3,6 +3,7 @@ export function formatPredictionLabel(raw: string): string {
   const lower = raw.toLowerCase().trim()
   if (lower === 'yes') return 'Tumor Detected'
   if (lower === 'no') return 'No Tumor Detected'
+  if (lower === 'uncertain') return 'Uncertain'
   return raw
 }
 

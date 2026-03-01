@@ -8,10 +8,41 @@ import { getRecentScans, addScanToHistory, type ScanHistoryItem } from './utils/
 import { formatPredictionLabel, formatProbLabel } from './utils/formatLabel'
 
 interface PredictionResult {
+  ok: boolean
+  prediction: string
   pred_label: string
   confidence: number
   probs: Record<string, number>
+  uncertain: boolean
+  message: string
+  request_id?: string
   gradcam_overlay_b64: string
+}
+
+const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png']
+const MIN_IMAGE_SIZE = 128
+
+function validateFile(file: File): string | null {
+  if (!ALLOWED_TYPES.includes(file.type.toLowerCase())) {
+    return 'Only JPEG and PNG images are accepted.'
+  }
+  if (file.size === 0) return 'File is empty.'
+  return null
+}
+
+function validateImageDimensions(src: string): Promise<string | null> {
+  return new Promise((resolve) => {
+    const img = new Image()
+    img.onload = () => {
+      if (img.naturalWidth < MIN_IMAGE_SIZE || img.naturalHeight < MIN_IMAGE_SIZE) {
+        resolve(`Image must be at least ${MIN_IMAGE_SIZE}x${MIN_IMAGE_SIZE} pixels.`)
+      } else {
+        resolve(null)
+      }
+    }
+    img.onerror = () => resolve('Could not load image.')
+    img.src = src
+  })
 }
 
 const API_BASE = import.meta.env.VITE_API_URL || 'https://ai-ml-portfolio-2pio.onrender.com'
@@ -31,13 +62,19 @@ function App() {
     setError(null)
     setResult(null)
     if (f) {
-      if (!f.type.startsWith('image/')) {
-        setError('Please upload an image file (JPEG, PNG, etc.)')
+      const fileErr = validateFile(f)
+      if (fileErr) {
+        setError(fileErr)
         return
       }
       setFile(f)
       const reader = new FileReader()
-      reader.onload = () => setPreview(reader.result as string)
+      reader.onload = async () => {
+        const dataUrl = reader.result as string
+        setPreview(dataUrl)
+        const dimErr = await validateImageDimensions(dataUrl)
+        if (dimErr) setError(dimErr)
+      }
       reader.readAsDataURL(f)
     } else {
       setFile(null)
@@ -47,6 +84,13 @@ function App() {
 
   const handleSubmit = useCallback(async () => {
     if (!file) return
+    if (preview) {
+      const dimErr = await validateImageDimensions(preview)
+      if (dimErr) {
+        setError(dimErr)
+        return
+      }
+    }
     setLoading(true)
     setError(null)
     setResult(null)
@@ -56,6 +100,7 @@ function App() {
       const res = await fetch(`${API_BASE}/predict`, {
         method: 'POST',
         body: formData,
+        cache: 'no-store',
       })
       const contentType = res.headers.get('content-type') ?? ''
       if (!res.ok) {
@@ -65,13 +110,19 @@ function App() {
         }
         throw new Error(`Request failed: ${res.status}`)
       }
-      const data: PredictionResult = await res.json()
-      setResult(data)
+      const data = await res.json() as PredictionResult
+      setResult({
+        ...data,
+        ok: data.ok ?? true,
+        prediction: data.prediction ?? formatPredictionLabel(data.pred_label),
+        uncertain: data.uncertain ?? false,
+        message: data.message ?? '',
+      })
       if (preview) {
         addScanToHistory({
           originalImage: preview,
           gradcamImage: data.gradcam_overlay_b64,
-          prediction: data.pred_label,
+          prediction: data.pred_label ?? data.prediction,
           confidence: data.confidence,
           probs: data.probs,
           timestamp: Date.now(),
@@ -95,10 +146,15 @@ function App() {
 
   const handleLoadFromHistory = useCallback((scan: ScanHistoryItem) => {
     setPreview(scan.originalImage)
+    const isUncertain = scan.prediction?.toLowerCase() === 'uncertain'
     setResult({
+      ok: true,
+      prediction: formatPredictionLabel(scan.prediction),
       pred_label: scan.prediction,
       confidence: scan.confidence,
       probs: scan.probs,
+      uncertain: isUncertain,
+      message: isUncertain ? 'Low confidence. Consider clinical review or additional imaging.' : '',
       gradcam_overlay_b64: scan.gradcamImage,
     })
     setFile(null)
@@ -178,7 +234,7 @@ function App() {
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept="image/*"
+                  accept="image/jpeg,image/jpg,image/png"
                   onChange={handleFileChange}
                   disabled={loading}
                   className="hidden"
@@ -200,7 +256,42 @@ function App() {
                       </svg>
                     </div>
                     <p className="text-slate-400">Click or drag to upload MRI scan</p>
-                    <p className="text-slate-500 text-sm mt-1">JPEG, PNG supported</p>
+                    <p className="text-slate-500 text-sm mt-1">JPEG, PNG only · min 128×128 px</p>
+                    <div className="mt-4 flex flex-wrap justify-center gap-2">
+                      <span className="text-slate-500 text-xs">Demo:</span>
+                      {['demo1', 'demo2', 'demo3'].map((name) => (
+                        <button
+                          key={name}
+                          type="button"
+                          onClick={async () => {
+                            setError(null)
+                            setResult(null)
+                            let res = await fetch(`/demo/${name}.jpg`, { cache: 'no-store' })
+                            if (!res.ok) res = await fetch(`/demo/${name}.png`, { cache: 'no-store' })
+                            try {
+                              if (!res.ok) throw new Error('Demo image not found')
+                              const blob = await res.blob()
+                              const ext = res.url.endsWith('.png') ? 'png' : 'jpg'
+                              const file = new File([blob], `${name}.${ext}`, { type: blob.type })
+                              setFile(file)
+                              const dataUrl = await new Promise<string>((resolve, reject) => {
+                                const r = new FileReader()
+                                r.onload = () => resolve(r.result as string)
+                                r.onerror = reject
+                                r.readAsDataURL(blob)
+                              })
+                              setPreview(dataUrl)
+                            } catch {
+                              setError('Demo image unavailable. Add demo1.jpg, demo2.jpg, or demo3.jpg to /public/demo/')
+                            }
+                          }}
+                          disabled={loading}
+                          className="rounded-lg border border-slate-600/50 bg-slate-800/50 px-3 py-1.5 text-xs font-medium text-slate-400 hover:bg-slate-700/50 hover:text-slate-300 disabled:opacity-50"
+                        >
+                          {name}
+                        </button>
+                      ))}
+                    </div>
                   </>
                 )}
               </div>
@@ -273,21 +364,31 @@ function App() {
 
             {/* Results card */}
             <div className="rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl shadow-2xl shadow-black/20 p-8 sm:p-10 space-y-8 transition-all duration-500">
-              <h2 className="text-xl font-semibold text-slate-300">Results</h2>
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                <h2 className="text-xl font-semibold text-slate-300">Results</h2>
+                {result.request_id && (
+                  <span className="text-xs font-mono text-slate-500">#{result.request_id}</span>
+                )}
+              </div>
 
               {/* Prediction badge */}
               <div className="flex flex-wrap items-center gap-4">
                 <span className="text-slate-500">Prediction:</span>
                 <span
                   className={`inline-flex items-center px-5 py-2.5 rounded-2xl font-semibold text-lg shadow-lg transition-all duration-300 ${
-                    result.pred_label.toLowerCase() === 'yes'
-                      ? 'bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-500/40 text-amber-400'
-                      : 'bg-gradient-to-r from-emerald-500/20 to-teal-500/20 border border-emerald-500/40 text-emerald-400'
+                    result.uncertain
+                      ? 'bg-gradient-to-r from-amber-500/20 to-yellow-500/20 border border-amber-500/40 text-amber-400'
+                      : result.pred_label?.toLowerCase() === 'yes'
+                        ? 'bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-500/40 text-amber-400'
+                        : 'bg-gradient-to-r from-emerald-500/20 to-teal-500/20 border border-emerald-500/40 text-emerald-400'
                   }`}
                 >
-                  {formatPredictionLabel(result.pred_label)}
+                  {result.prediction ?? formatPredictionLabel(result.pred_label)}
                 </span>
               </div>
+              {result.uncertain && result.message && (
+                <p className="text-amber-400/90 text-sm">{result.message}</p>
+              )}
 
               {/* Confidence progress bar */}
               <div className="space-y-2">
@@ -331,6 +432,7 @@ function App() {
             <AIExplanationPanel
               predLabel={result.pred_label}
               confidence={result.confidence}
+              uncertain={result.uncertain}
             />
 
             {/* Export */}
@@ -340,8 +442,9 @@ function App() {
               probs={result.probs}
               originalImageSrc={preview}
               gradcamOverlayB64={result.gradcam_overlay_b64}
-              interpretation={result.pred_label.toLowerCase() === 'yes' ? 'Model detected tumor-related visual patterns.' : 'No tumor-specific patterns detected.'}
-              riskLevel={result.confidence > 0.8 ? 'High' : result.confidence >= 0.6 ? 'Medium' : 'Low'}
+              interpretation={result.uncertain ? result.message : result.pred_label?.toLowerCase() === 'yes' ? 'Model detected tumor-related visual patterns.' : 'No tumor-specific patterns detected.'}
+              riskLevel={result.uncertain ? 'Low' : result.confidence > 0.8 ? 'High' : result.confidence >= 0.6 ? 'Medium' : 'Low'}
+              requestId={result.request_id}
             />
 
             {/* Recent Scans */}

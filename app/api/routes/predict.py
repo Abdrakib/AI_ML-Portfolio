@@ -1,9 +1,11 @@
 """Prediction routes."""
 import logging
+import uuid
 from fastapi import APIRouter, File, HTTPException, UploadFile
-from fastapi.responses import Response
+from fastapi.responses import JSONResponse, Response
 
 from core.predictor import predict_with_gradcam, get_gradcam_overlay_bytes
+from core.image_validation import validate_image
 
 logger = logging.getLogger(__name__)
 
@@ -14,14 +16,16 @@ router = APIRouter(prefix="/predict", tags=["predict"])
 async def predict(file: UploadFile = File(...)):
     """
     Classify brain MRI image and return prediction with Grad-CAM overlay.
-    Returns: pred_label, confidence, probs, gradcam_overlay_b64 (base64 PNG).
+    Returns: ok, prediction, confidence, probs, uncertain, message, request_id, gradcam_overlay_b64.
     """
-    logger.info("POST /predict received request")
-    if not file.content_type or not file.content_type.startswith("image/"):
+    request_id = str(uuid.uuid4())[:8]
+    logger.info("POST /predict received request_id=%s", request_id)
+
+    if not file.content_type or file.content_type.lower() not in ("image/jpeg", "image/jpg", "image/png"):
         logger.warning("Invalid file type: %s", file.content_type)
         raise HTTPException(
             status_code=400,
-            detail="Invalid file type. Expected image (JPEG, PNG, etc.).",
+            detail="Only JPEG and PNG images are accepted.",
         )
 
     try:
@@ -30,14 +34,20 @@ async def predict(file: UploadFile = File(...)):
         logger.exception("Failed to read uploaded file: %s", e)
         raise HTTPException(status_code=400, detail="Failed to read image file.") from e
 
-    if len(img_bytes) == 0:
-        logger.warning("Empty image file received")
-        raise HTTPException(status_code=400, detail="Empty image file.")
+    try:
+        validate_image(img_bytes, file.content_type)
+    except ValueError as e:
+        logger.warning("Validation failed: %s", e)
+        raise HTTPException(status_code=400, detail=str(e)) from e
 
     try:
         result = predict_with_gradcam(img_bytes)
-        logger.info("Prediction success: %s", result.get("pred_label"))
-        return result
+        result["request_id"] = request_id
+        logger.info("Prediction success request_id=%s prediction=%s", request_id, result.get("prediction"))
+        return JSONResponse(
+            content=result,
+            headers={"Cache-Control": "no-store"},
+        )
     except RuntimeError as e:
         if "not loaded" in str(e):
             logger.error("Model not loaded: %s", e)
@@ -64,11 +74,11 @@ async def predict_overlay(file: UploadFile = File(...)):
     Return the Grad-CAM overlay as PNG directly (no prediction metadata).
     """
     logger.info("POST /predict_overlay received request")
-    if not file.content_type or not file.content_type.startswith("image/"):
+    if not file.content_type or file.content_type.lower() not in ("image/jpeg", "image/jpg", "image/png"):
         logger.warning("Invalid file type: %s", file.content_type)
         raise HTTPException(
             status_code=400,
-            detail="Invalid file type. Expected image (JPEG, PNG, etc.).",
+            detail="Only JPEG and PNG images are accepted.",
         )
 
     try:
@@ -77,14 +87,20 @@ async def predict_overlay(file: UploadFile = File(...)):
         logger.exception("Failed to read uploaded file: %s", e)
         raise HTTPException(status_code=400, detail="Failed to read image file.") from e
 
-    if len(img_bytes) == 0:
-        logger.warning("Empty image file received")
-        raise HTTPException(status_code=400, detail="Empty image file.")
+    try:
+        validate_image(img_bytes, file.content_type)
+    except ValueError as e:
+        logger.warning("Validation failed: %s", e)
+        raise HTTPException(status_code=400, detail=str(e)) from e
 
     try:
         overlay_bytes = get_gradcam_overlay_bytes(img_bytes)
         logger.info("Grad-CAM overlay generated successfully")
-        return Response(content=overlay_bytes, media_type="image/png")
+        return Response(
+            content=overlay_bytes,
+            media_type="image/png",
+            headers={"Cache-Control": "no-store"},
+        )
     except RuntimeError as e:
         if "not loaded" in str(e):
             logger.error("Model not loaded: %s", e)
