@@ -5,7 +5,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from  config import MODEL_PATH, LABEL_MAP_PATH
+from config import MODEL_PATH, LABEL_MAP_PATH
 from core.model_loader import init_model
 from api.routes import predict, health
 
@@ -52,5 +52,5 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
+app.include_router(predict.router)
 app.include_router(predict.overlay_router)
