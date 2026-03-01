@@ -33,6 +33,17 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+
+
+# ✅ ADD THIS PART
+@app.get("/")
+def root():
+    return {"message": "Backend is running"}
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
