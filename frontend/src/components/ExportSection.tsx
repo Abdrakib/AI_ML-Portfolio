@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react'
 import { jsPDF } from 'jspdf'
+import { formatPredictionLabel, formatProbLabel } from '../utils/formatLabel'
 
 interface ExportSectionProps {
   predLabel: string
@@ -28,11 +29,14 @@ export function ExportSection({
   }, [])
 
   const handleCopyLink = useCallback(async () => {
+    const formattedProbs = Object.fromEntries(
+      Object.entries(probs).map(([k, v]) => [formatProbLabel(k), Math.round(v * 10000) / 10000])
+    )
     const summary = {
-      prediction: predLabel,
-      confidence: Math.round(confidence * 100) / 100,
+      prediction: formatPredictionLabel(predLabel),
+      confidence: Math.round(confidence * 10000) / 10000,
       riskLevel,
-      probabilities: probs,
+      probabilities: formattedProbs,
       interpretation,
       generatedAt: new Date().toISOString(),
     }
@@ -61,9 +65,9 @@ export function ExportSection({
 
     doc.setTextColor(0, 0, 0)
     doc.setFontSize(12)
-    doc.text(`Prediction: ${predLabel}`, margin, y)
+    doc.text(`Prediction: ${formatPredictionLabel(predLabel)}`, margin, y)
     y += 8
-    doc.text(`Confidence: ${(confidence * 100).toFixed(1)}%`, margin, y)
+    doc.text(`Confidence: ${(confidence * 100).toFixed(2)}%`, margin, y)
     y += 8
     doc.text(`Risk Level: ${riskLevel}`, margin, y)
     y += 16

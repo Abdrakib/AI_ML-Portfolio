@@ -1,5 +1,6 @@
 import { useCallback } from 'react'
 import type { ScanHistoryItem } from '../utils/scanHistory'
+import { formatPredictionLabel } from '../utils/formatLabel'
 
 interface RecentScansProps {
   scans: ScanHistoryItem[]
@@ -55,10 +56,10 @@ export function RecentScans({ scans, onSelectScan }: RecentScansProps) {
                       : 'bg-emerald-500/20 border border-emerald-500/40 text-emerald-400'
                   }`}
                 >
-                  {scan.prediction}
+                  {formatPredictionLabel(scan.prediction)}
                 </span>
                 <span className="text-sm font-medium text-white">
-                  {(scan.confidence * 100).toFixed(1)}%
+                  {(scan.confidence * 100).toFixed(2)}%
                 </span>
               </div>
               <p className="text-xs text-slate-500">{formatTime(scan.timestamp)}</p>

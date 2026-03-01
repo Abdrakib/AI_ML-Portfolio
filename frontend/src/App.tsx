@@ -5,6 +5,7 @@ import { ExportSection } from './components/ExportSection'
 import { RecentScans } from './components/RecentScans'
 import { ConfidenceChart } from './components/ConfidenceChart'
 import { getRecentScans, addScanToHistory, type ScanHistoryItem } from './utils/scanHistory'
+import { formatPredictionLabel, formatProbLabel } from './utils/formatLabel'
 
 interface PredictionResult {
   pred_label: string
@@ -144,17 +145,42 @@ function App() {
 
         {/* Upload card - Glassmorphism */}
         <section className="w-full max-w-xl">
-          <div className="rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl shadow-2xl shadow-black/20 p-8 sm:p-10 transition-all duration-300 hover:border-white/20 hover:shadow-violet-500/5">
+          <div className="rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl shadow-2xl shadow-black/20 p-8 sm:p-10 transition-all duration-300 hover:border-white/20 hover:shadow-violet-500/5 relative">
+            {loading && (
+              <div className="absolute inset-0 rounded-3xl bg-slate-950/60 backdrop-blur-sm flex items-center justify-center z-10">
+                <div className="flex flex-col items-center gap-3">
+                  <svg
+                    className="animate-spin h-10 w-10 text-violet-400"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    />
+                  </svg>
+                  <span className="text-slate-300 font-medium">Analyzing image...</span>
+                </div>
+              </div>
+            )}
             <div className="space-y-6">
               <div
-                onClick={() => fileInputRef.current?.click()}
-                className="border-2 border-dashed border-slate-500/50 rounded-2xl p-12 text-center cursor-pointer transition-all duration-300 hover:border-violet-500/50 hover:bg-white/5"
+                onClick={() => !loading && fileInputRef.current?.click()}
+                className={`border-2 border-dashed rounded-2xl p-12 text-center transition-all duration-300 ${
+                  loading
+                    ? 'border-slate-600/50 cursor-not-allowed opacity-60 pointer-events-none'
+                    : 'border-slate-500/50 cursor-pointer hover:border-violet-500/50 hover:bg-white/5'
+                }`}
               >
                 <input
                   ref={fileInputRef}
                   type="file"
                   accept="image/*"
                   onChange={handleFileChange}
+                  disabled={loading}
                   className="hidden"
                 />
                 {preview ? (
@@ -208,7 +234,8 @@ function App() {
                 </button>
                 <button
                   onClick={handleReset}
-                  className="py-4 px-6 rounded-2xl font-semibold border border-slate-600/50 bg-slate-800/50 hover:bg-slate-700/50 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
+                  disabled={loading}
+                  className="py-4 px-6 rounded-2xl font-semibold border border-slate-600/50 bg-slate-800/50 hover:bg-slate-700/50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
                 >
                   Reset
                 </button>
@@ -258,7 +285,7 @@ function App() {
                       : 'bg-gradient-to-r from-emerald-500/20 to-teal-500/20 border border-emerald-500/40 text-emerald-400'
                   }`}
                 >
-                  {result.pred_label}
+                  {formatPredictionLabel(result.pred_label)}
                 </span>
               </div>
 
@@ -266,7 +293,7 @@ function App() {
               <div className="space-y-2">
                 <div className="flex justify-between text-sm text-slate-400">
                   <span>Confidence</span>
-                  <span className="font-medium text-white">{(result.confidence * 100).toFixed(1)}%</span>
+                  <span className="font-medium text-white">{(result.confidence * 100).toFixed(2)}%</span>
                 </div>
                 <div className="h-3 rounded-full bg-slate-800 overflow-hidden">
                   <div
@@ -276,15 +303,21 @@ function App() {
                 </div>
               </div>
 
-              {/* Class probabilities */}
+              {/* Class probabilities with animated bars */}
               <div className="grid grid-cols-2 gap-3">
                 {Object.entries(result.probs).map(([label, prob]) => (
                   <div
                     key={label}
                     className="rounded-xl bg-slate-800/50 border border-slate-700/50 p-4 transition-all duration-300 hover:border-slate-600"
                   >
-                    <span className="text-slate-400 text-sm">{label}</span>
-                    <p className="text-lg font-semibold mt-1">{(prob * 100).toFixed(1)}%</p>
+                    <span className="text-slate-400 text-sm block mb-2">{formatProbLabel(label)}</span>
+                    <div className="h-2 rounded-full bg-slate-700 overflow-hidden">
+                      <div
+                        className="h-full rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500 transition-all duration-700 ease-out"
+                        style={{ width: `${prob * 100}%` }}
+                      />
+                    </div>
+                    <p className="text-lg font-semibold mt-1">{(prob * 100).toFixed(2)}%</p>
                   </div>
                 ))}
               </div>

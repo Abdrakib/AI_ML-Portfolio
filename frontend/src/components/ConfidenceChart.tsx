@@ -14,7 +14,7 @@ interface ConfidenceChartProps {
 }
 
 const CHART_DATA = [
-  { label: 'No Tumor', key: 'no', fill: 'url(#barNo)' },
+  { label: 'No Tumor Detected', key: 'no', fill: 'url(#barNo)' },
   { label: 'Tumor Detected', key: 'yes', fill: 'url(#barYes)' },
 ]
 
@@ -62,7 +62,7 @@ export function ConfidenceChart({ probs }: ConfidenceChartProps) {
             <YAxis
               type="category"
               dataKey="label"
-              width={90}
+              width={130}
               tick={{ fill: '#cbd5e1', fontSize: 13 }}
               stroke="#334155"
               axisLine={false}
@@ -77,7 +77,7 @@ export function ConfidenceChart({ probs }: ConfidenceChartProps) {
                 boxShadow: '0 10px 40px rgba(0,0,0,0.3)',
               }}
               labelStyle={{ color: '#cbd5e1' }}
-              formatter={(value: number) => [`${value.toFixed(1)}%`, 'Probability']}
+              formatter={(value: number) => [`${value.toFixed(2)}%`, 'Probability']}
               labelFormatter={(label) => label}
               cursor={{ fill: 'rgba(148, 163, 184, 0.08)' }}
             />
