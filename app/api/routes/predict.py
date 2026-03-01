@@ -3,7 +3,7 @@ import logging
 from fastapi import APIRouter, File, HTTPException, UploadFile
 from fastapi.responses import Response
 
-from app.core.predictor import predict_with_gradcam, get_gradcam_overlay_bytes
+from core.predictor import predict_with_gradcam, get_gradcam_overlay_bytes
 
 logger = logging.getLogger(__name__)
 
