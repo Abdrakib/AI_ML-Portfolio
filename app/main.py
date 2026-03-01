@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from config import MODEL_PATH, LABEL_MAP_PATH
 from core.model_loader import init_model
-from api.routes import predict, health
+from api.routes import predict
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Load model at startup."""
+    """Load model once at startup (singleton)."""
     try:
         init_model(MODEL_PATH, LABEL_MAP_PATH)
         logger.info("Model and label map loaded successfully")
@@ -23,26 +23,24 @@ async def lifespan(app: FastAPI):
         logger.warning("Could not load model at startup: %s", e)
         logger.warning("Place model at %s and label map at %s", MODEL_PATH, LABEL_MAP_PATH)
     yield
-    # Shutdown: nothing to do
 
 
 app = FastAPI(
-    title="Brain Tumor Classification API",
-    description="Classify brain MRI images and return Grad-CAM overlay.",
+    title="Brain MRI AI",
+    description="Brain tumor classification API with Grad-CAM explainability.",
     version="1.0.0",
     lifespan=lifespan,
 )
 
 
-
-# ✅ ADD THIS PART
 @app.get("/")
 def root():
-    return {"message": "Backend is running"}
+    return {"status": "ok", "service": "Brain MRI AI"}
+
 
 @app.get("/health")
 def health():
-    return {"status": "ok"}
+    return {"status": "ok", "service": "Brain MRI AI"}
 
 app.add_middleware(
     CORSMiddleware,

@@ -24,12 +24,11 @@ def validate_image(img_bytes: bytes, content_type: str | None) -> Tuple[int, int
 
     try:
         img = Image.open(io.BytesIO(img_bytes))
-        img.verify()
+        img.load()
     except Exception as e:
         logger.warning("Unreadable image: %s", e)
         raise ValueError("Image could not be read or is corrupted.") from e
 
-    img = Image.open(io.BytesIO(img_bytes))
     w, h = img.size
 
     if w < MIN_SIZE or h < MIN_SIZE:
