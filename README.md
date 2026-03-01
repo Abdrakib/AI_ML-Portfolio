@@ -1,5 +1,18 @@
 # AI & Machine Learning Portfolio
 
+## 🌐 Live Demo
+
+Try the deployed application here:  
+https://ai-ml-portfolio-theta.vercel.app
+
+This project is deployed in production using:
+
+- **Frontend:** Vercel (React + Vite)
+- **Backend:** Render (FastAPI)
+- **Model:** Brain MRI Tumor Classification with Grad-CAM explainability
+
+---
+
 This repository contains my hands-on projects in:
 - Machine Learning
 - Deep Learning
