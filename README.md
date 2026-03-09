@@ -166,6 +166,6 @@ Set `VITE_API_URL=http://localhost:8000` in frontend `.env` for local backend.
 
 ---
 
-## Portfolio
+## Author
 
-This Brain MRI AI project is part of a broader [AI & ML Portfolio](https://github.com/Abdrakib/AI_ML-Portfolio) showcasing projects in Machine Learning, Deep Learning, Computer Vision, NLP, and Data Science.
+**Abdrakib** — [GitHub](https://github.com/Abdrakib) | [AI & ML Portfolio](https://github.com/Abdrakib/AI_ML-Portfolio)
