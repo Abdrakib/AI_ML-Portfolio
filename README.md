@@ -1,171 +1,58 @@
-# Brain MRI AI — Tumor Classification with Grad-CAM
+# AI & Machine Learning Portfolio
 
-[![Live Demo](https://img.shields.io/badge/Live_Demo-View_App-success?style=for-the-badge)](https://ai-ml-portfolio-git-main-abdrakibs-projects.vercel.app)
-
-Production-ready AI application for brain tumor classification from MRI images, featuring explainable Grad-CAM visualization, confidence scoring, and uncertain prediction handling.
+A collection of Machine Learning learning experiments and Jupyter notebooks covering diverse topics in ML, Deep Learning, Computer Vision, NLP, and Data Science.
 
 ---
 
-## Live Deployment
+## About This Repository
 
-| Component | URL |
-|-----------|-----|
-| **Frontend** (Vercel) | [https://ai-ml-portfolio-git-main-abdrakibs-projects.vercel.app](https://ai-ml-portfolio-git-main-abdrakibs-projects.vercel.app) |
-| **Backend API** (Render) | [https://ai-ml-portfolio-2pio.onrender.com](https://ai-ml-portfolio-2pio.onrender.com) |
+This repository contains my hands-on learning projects and experiments. Each folder includes Jupyter notebooks with step-by-step implementations, datasets references, and explanations. Projects are organized by domain and ready to open in Google Colab or Jupyter.
 
 ---
 
-## Architecture Overview
+## Repository Structure
 
-```
-┌─────────────────────┐     ┌─────────────────────┐     ┌─────────────────────┐
-│  Frontend (Vercel)  │────▶│  Backend (Render)   │────▶│  TensorFlow Model   │
-│  React + Vite       │     │  FastAPI            │     │  EfficientNet +     │
-│  Tailwind CSS      │     │  /predict endpoint  │     │  Grad-CAM           │
-└─────────────────────┘     └─────────────────────┘     └─────────────────────┘
-```
-
-- **Frontend:** React 18 + Vite + Tailwind CSS
-- **Backend:** FastAPI with async image handling
-- **Model:** EfficientNetB0-based binary classifier (Tumor / No Tumor)
+| Folder | Contents |
+|--------|----------|
+| **01_machine_learning** | Classification, regression, clustering, and traditional ML projects |
+| **02_deep_learning** | Neural networks, CNNs, audio classification, speech emotion recognition |
+| **03_computer_vision** | Image processing, object detection, segmentation, face analysis |
+| **04_nlp** | Sentiment analysis, text summarization, chatbots, recommendation systems |
+| **06_Data_Science** | Data analysis, visualization, and analytics projects |
+| **07_ml_fundamental** | Implementations from scratch (e.g., decision trees, backpropagation) |
 
 ---
 
-## Features
+## Featured Projects
 
-- **Brain tumor classification** — Binary prediction (Tumor Detected / No Tumor Detected)
-- **Grad-CAM explainability** — Heatmap overlay showing model attention regions
-- **Confidence scoring** — Per-class probabilities with 2-decimal display
-- **Uncertain prediction handling** — When confidence < 60%, returns "Uncertain" with clinical review message
-- **Image validation** — JPEG/PNG only, min 128×128, rejects corrupted files
-- **PDF export** — Download report with thumbnails and summary
-- **Live deployment** — Full-stack app deployed on Vercel + Render
-- **Request tracking** — Unique `request_id` per prediction for traceability
+These larger projects are deployed applications with their own repositories:
 
----
-
-## Demo Instructions
-
-1. Open the [Live Demo](https://ai-ml-portfolio-git-main-abdrakibs-projects.vercel.app)
-2. Upload a brain MRI image (JPEG or PNG, min 128×128 pixels)
-3. Click **Analyze** and view prediction, confidence, and Grad-CAM overlay
-4. Use Demo buttons (if images are in `/public/demo/`) for quick testing
-5. Export results as PDF or copy JSON summary
+| Project | Description | Repository |
+|---------|-------------|------------|
+| **Brain Tumor MRI AI** | Deep learning web app for brain tumor detection from MRI scans with Grad-CAM explainability | [brain-tumor-ai-app](https://github.com/Abdrakib/brain-tumor-ai-app) |
+| **Credit Risk Predictor** | ML web application for credit default risk prediction with interactive interface | [credit-risk-predictor](https://github.com/Abdrakib/credit-risk-predictor) |
+| **AI Computer Science Tutor** | AI-powered CS tutor using retrieval and web search for programming questions | [ai-cs-tutor](https://github.com/Abdrakib/ai-cs-tutor) |
+| **Mini GPT from Scratch** | Custom GPT implementation built from scratch | [Repository link — add when available] |
 
 ---
 
-## API Endpoint
+## How to Use
 
-### `POST /predict`
-
-Upload an image as `multipart/form-data` with key `file`.
-
-**Request:** `Content-Type: multipart/form-data`, body: `file` (JPEG/PNG image)
-
-**Response (200):**
-```json
-{
-  "ok": true,
-  "prediction": "Tumor Detected",
-  "pred_label": "yes",
-  "confidence": 0.93,
-  "probs": {"no": 0.07, "yes": 0.93},
-  "uncertain": false,
-  "message": "",
-  "request_id": "abc12345",
-  "gradcam_overlay_b64": "<base64 PNG>"
-}
-```
-
-**Validation:** JPEG/PNG only, min 128×128, RGB/L/RGBA channels.
+1. Navigate to any project folder
+2. Open the `.ipynb` (Jupyter notebook) file
+3. Run in [Google Colab](https://colab.research.google.com/) or Jupyter
+4. Check the project's `README.md` for setup and dataset instructions
 
 ---
 
-## Tech Stack
+## Summary
 
-| Layer | Technology |
-|-------|------------|
-| Frontend | React 18, Vite, TypeScript, Tailwind CSS, Recharts |
-| Backend | FastAPI, Uvicorn, Python 3.11 |
-| ML | TensorFlow/Keras, EfficientNetB0, Grad-CAM |
-| Deployment | Vercel (frontend), Render (backend) |
-| Validation | Pillow (PIL) |
-
----
-
-## Project Structure
-
-```
-├── app/                    # FastAPI backend
-│   ├── main.py             # App entry, lifespan, routes
-│   ├── config.py           # Paths, model config
-│   ├── api/routes/         # /predict, /predict_overlay
-│   └── core/               # model_loader, predictor, gradcam, image_validation
-├── frontend/               # React + Vite
-│   ├── src/
-│   │   ├── App.tsx         # Main UI
-│   │   ├── components/     # CompareSlider, ConfidenceChart, ExportSection, etc.
-│   │   └── utils/
-│   └── public/demo/        # Demo images (add demo1.jpg, demo2.jpg)
-├── models/v1/              # Model artifacts
-│   ├── adv_final_tfhub.keras
-│   └── label_to_idx.json
-├── gradcam.py              # Standalone Grad-CAM module
-├── requirements.txt
-├── render.yaml             # Render deployment config
-└── runtime.txt             # Python 3.11
-```
-
----
-
-## Model Information
-
-- **Architecture:** Custom head on EfficientNetB0 (TensorFlow Hub)
-- **Task:** Binary classification (Tumor / No Tumor)
-- **Input:** 224×224 RGB images (resized from upload)
-- **Output:** Class probabilities, Grad-CAM overlay
-- **Training:** Pre-trained (no retraining in this repo)
-
----
-
-## Limitations
-
-- Binary classification only (no multi-class tumor types)
-- Requires JPEG/PNG, min 128×128 pixels
-- Not a substitute for clinical diagnosis; AI-assisted only
-- Backend cold start on Render free tier (~30–60s first request)
-
----
-
-## Future Improvements
-
-- Multi-class tumor type classification
-- Batch prediction endpoint
-- Optional authentication / rate limiting
-- Model versioning and A/B testing
-- Integration with DICOM viewers
-
----
-
-## Local Development
-
-**Backend:**
-```bash
-pip install -r requirements.txt
-uvicorn app.main:app --reload --port 8000
-```
-
-**Frontend:**
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-Set `VITE_API_URL=http://localhost:8000` in frontend `.env` for local backend.
+- **50+ projects** across ML, Deep Learning, Computer Vision, NLP, and Data Science
+- All projects are **Jupyter Notebooks** suitable for learning and experimentation
+- Featured deployed applications have **dedicated repositories** (see above)
 
 ---
 
 ## Author
 
-**Abdrakib** — [GitHub](https://github.com/Abdrakib) | [AI & ML Portfolio](https://github.com/Abdrakib/AI_ML-Portfolio)
+**Abdrakib** — [GitHub](https://github.com/Abdrakib)
